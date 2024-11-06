@@ -17,3 +17,7 @@ func ConnectDatabase(dsn string) (*gorm.DB, error) {
 
 	return db, nil
 }
+
+func Migrate(db *gorm.DB) error {
+	return db.AutoMigrate(&Service2fa{}, &User2fa{}, &UserServiceLink{})
+}

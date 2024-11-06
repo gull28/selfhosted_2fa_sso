@@ -8,10 +8,45 @@ type ServiceController struct {
 	db *gorm.DB
 }
 
+type BindRequest struct {
+	ServiceId string `json:"serviceId" binding:"required"`
+	UserId string `json:"userId" binding:"required"` // userId created in the service server
+	AuthUserId string `json:"authUserId" binding:"required"` // userId created in the 2fa server
+}
+
 func GetServiceController(db *gorm.DB) *ServiceController {
 	return &ServiceController{DB: db}
 }
 
 func (sc *ServiceController) BindServiceTo2fa(c *gin.Config) {
-	var userServiceLink models.UserServiceLink
+	var bindRequest BindRequest
+
+	err := c.ShouldBindJSON(&bindRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+	}
+
+	service, err := models.GetServiceByID(sc.db, id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Service not found"})
+		return
+	}
+
+	user, err := models.GetUserByID(sc,db, bindRequest.AuthUserId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User not found"})
+		return
+	}
+
+	userServiceLink = models.UserServiceLink{
+		UserID:       bindRequest.UserId,
+		Service2faID: service.ID,
+		User2faID:    user.ID,
+	}
+
+	if err := sc.db.Create(&userServiceLink).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create link"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Service linked to 2FA successfully", "link": userServiceLink})
 }
