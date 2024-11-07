@@ -2,20 +2,20 @@ package models
 
 import "gorm.io/gorm"
 
-type Service2FA struct {
+type Service2fa struct {
 	gorm.Model
 
-	ID          string `gorm:"uniqueIndex"`
+	ID          uint `gorm:"uniqueIndex"`
 	Name        string
 	Description string
 }
 
-func (service *Service2FA) CreateService(db *gorm.DB) error {
-	return db.Create(u).Error
+func (service *Service2fa) CreateService(db *gorm.DB) error {
+	return db.Create(&service).Error
 }
 
-func GetServiceByID(db *gorm.DB, id uint) (*Service2FA, error) {
-	var service Service2FA
+func GetServiceByID(db *gorm.DB, id string) (*Service2fa, error) {
+	var service Service2fa
 	err := db.First(&service, id).Error
 	return &service, err
 }

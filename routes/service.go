@@ -12,7 +12,7 @@ func RegisterServiceRoutes(router *gin.Engine, db *gorm.DB) {
 
 	userRoutes := router.Group("/service")
 	{
-		userRoutes.POST("/bind", serviceControllerController.BindService)
-		userRoutes.POST("/unbind", serviceControllerController.UnbindService)
+		userRoutes.POST("/bind", serviceControllerController.BindServiceTo2fa)
+		// userRoutes.POST("/unbind", serviceControllerController)
 	}
 }

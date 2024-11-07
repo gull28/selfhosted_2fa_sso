@@ -5,8 +5,8 @@ import "gorm.io/gorm"
 type UserServiceLink struct {
 	gorm.Model
 
-	UserID    uint `gorm:"index"` // outer service user id
-	ServiceID uint `gorm:"index"`
+	UserID    string `gorm:"index"` // outer service user id
+	ServiceID uint   `gorm:"index"`
 
 	User2faID    uint `gorm:"index"`
 	Service2faID uint `gorm:"index"`

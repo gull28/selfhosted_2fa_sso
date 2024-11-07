@@ -1,6 +1,10 @@
 package controllers
 
 import (
+	"net/http"
+	"selfhosted_2fa_sso/models"
+
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -9,35 +13,36 @@ type ServiceController struct {
 }
 
 type BindRequest struct {
-	ServiceId string `json:"serviceId" binding:"required"`
-	UserId string `json:"userId" binding:"required"` // userId created in the service server
-	AuthUserId string `json:"authUserId" binding:"required"` // userId created in the 2fa server
+	ServiceId  string `json:"serviceId" binding:"required"`
+	UserId     string `json:"userId" binding:"required"`     // userId created in the service server
+	AuthUserId uint   `json:"authUserId" binding:"required"` // userId created in the 2fa server
 }
 
 func GetServiceController(db *gorm.DB) *ServiceController {
-	return &ServiceController{DB: db}
+	return &ServiceController{db: db}
 }
 
-func (sc *ServiceController) BindServiceTo2fa(c *gin.Config) {
+func (sc *ServiceController) BindServiceTo2fa(c *gin.Context) {
 	var bindRequest BindRequest
 
-	err := c.ShouldBindJSON(&bindRequest); err != nil {
+	if err := c.ShouldBindJSON(&bindRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+		return
 	}
 
-	service, err := models.GetServiceByID(sc.db, id)
+	service, err := models.GetServiceByID(sc.db, bindRequest.ServiceId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Service not found"})
 		return
 	}
 
-	user, err := models.GetUserByID(sc,db, bindRequest.AuthUserId)
+	user, err := models.GetUserByID(sc.db, bindRequest.AuthUserId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User not found"})
 		return
 	}
 
-	userServiceLink = models.UserServiceLink{
+	var userServiceLink = models.UserServiceLink{
 		UserID:       bindRequest.UserId,
 		Service2faID: service.ID,
 		User2faID:    user.ID,

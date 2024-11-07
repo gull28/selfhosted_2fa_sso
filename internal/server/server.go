@@ -15,9 +15,10 @@ import (
 )
 
 type Server struct {
-	db     *gorm.DB
-	router *gin.Engine
-	config *config.Config
+	db         *gorm.DB
+	router     *gin.Engine
+	config     *config.Config
+	httpServer *http.Server
 }
 
 func NewServer(db *gorm.DB, cfg *config.Config) *Server {
@@ -30,6 +31,15 @@ func NewServer(db *gorm.DB, cfg *config.Config) *Server {
 	}
 
 	s.setupRoutes()
+
+	s.httpServer = &http.Server{
+		Addr:         fmt.Sprintf(":%s", cfg.App.Port),
+		Handler:      router,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  30 * time.Second,
+	}
+
 	return s
 }
 
@@ -43,20 +53,10 @@ func (s *Server) setupRoutes() {
 }
 
 func (s *Server) Start() error {
-	port := s.config.App.Port
-	addr := fmt.Sprintf(":%s", port)
-	log.Printf("Starting server on port %s\n", port)
-
-	srv := &http.Server{
-		Addr:         addr,
-		Handler:      s.router,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  30 * time.Second,
-	}
+	log.Printf("Starting server on port %s\n", s.config.App.Port)
 
 	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to start server: %v", err)
 		}
 	}()
@@ -65,5 +65,5 @@ func (s *Server) Start() error {
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	log.Println("Shutting down server...")
-	return s.router.Shutdown(ctx)
+	return s.httpServer.Shutdown(ctx)
 }
