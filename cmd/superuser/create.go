@@ -13,6 +13,7 @@ import (
 	"selfhosted_2fa_sso/models"
 )
 
+//nolint:unused
 func main() {
 	reader := bufio.NewReader(os.Stdin)
 	cfg, err := config.LoadConfig()

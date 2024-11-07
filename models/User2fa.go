@@ -31,7 +31,7 @@ func DeleteUser(db *gorm.DB, id uint) error {
 }
 
 // hooks
-func (u *User2fa) BeforeCreate(tx *gorm.DB) (err error) {
+func (u *User2fa) BeforeCreate(_ *gorm.DB) (err error) {
 	if u.UUID == "" {
 		u.UUID = uuid.New().String()
 	}

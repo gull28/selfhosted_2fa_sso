@@ -13,9 +13,9 @@ type ServiceController struct {
 }
 
 type BindRequest struct {
-	ServiceId  string `json:"serviceId" binding:"required"`
-	UserId     string `json:"userId" binding:"required"`     // userId created in the service server
-	AuthUserId uint   `json:"authUserId" binding:"required"` // userId created in the 2fa server
+	ServiceID  string `json:"serviceId" binding:"required"`
+	UserID     string `json:"userId" binding:"required"`     // userId created in the service server
+	AuthUserID uint   `json:"authUserId" binding:"required"` // userId created in the 2fa server
 }
 
 func GetServiceController(db *gorm.DB) *ServiceController {
@@ -30,20 +30,20 @@ func (sc *ServiceController) BindServiceTo2fa(c *gin.Context) {
 		return
 	}
 
-	service, err := models.GetServiceByID(sc.db, bindRequest.ServiceId)
+	service, err := models.GetServiceByID(sc.db, bindRequest.ServiceID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Service not found"})
 		return
 	}
 
-	user, err := models.GetUserByID(sc.db, bindRequest.AuthUserId)
+	user, err := models.GetUserByID(sc.db, bindRequest.AuthUserID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User not found"})
 		return
 	}
 
 	var userServiceLink = models.UserServiceLink{
-		UserID:       bindRequest.UserId,
+		UserID:       bindRequest.UserID,
 		Service2faID: service.ID,
 		User2faID:    user.ID,
 	}

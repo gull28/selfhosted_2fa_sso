@@ -3,6 +3,6 @@ linters:
     - errcheck
     - govet
     - gofmt
-    - golint
+    - revive
 run:
   timeout: 5m
