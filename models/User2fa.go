@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -12,7 +13,7 @@ type User2fa struct {
 }
 
 func (u *User2fa) CreateUser(db *gorm.DB) error {
-	return db.Create(u).Error
+	return db.Create(&u).Error
 }
 
 func GetUserByID(db *gorm.DB, id uint) (*User2fa, error) {
@@ -27,4 +28,12 @@ func (u *User2fa) UpdateUser(db *gorm.DB) error {
 
 func DeleteUser(db *gorm.DB, id uint) error {
 	return db.Delete(&User2fa{}, id).Error
+}
+
+// hooks
+func (u *User2fa) BeforeCreate(tx *gorm.DB) (err error) {
+	if u.UUID == "" {
+		u.UUID = uuid.New().String()
+	}
+	return
 }

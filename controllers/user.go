@@ -18,27 +18,31 @@ type VerifyRequest struct {
 	Code     string `json:"code" binding:"required"`
 }
 
+type CreateRequest struct {
+	Username string `json:"username" binding:"required"`
+}
+
 func GetUserController(db *gorm.DB) *UserController {
 	return &UserController{db: db}
 }
 
 func (uc *UserController) CreateUser(c *gin.Context) {
 	var user models.User2fa
-
-	if err := c.ShouldBindJSON(&user); err != nil {
+	var req CreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
 		return
 	}
 
 	var existingUser models.User2fa
-	if err := uc.db.Where("username = ?", user.Username).First(&existingUser).Error; err == nil {
+	if err := uc.db.Where("username = ?", req.Username).First(&existingUser).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Username or email already exists"})
 		return
 	}
 
 	totpSecret, err := totp.Generate(totp.GenerateOpts{
 		Issuer:      "selfhosted_2fa_sso",
-		AccountName: user.Username,
+		AccountName: req.Username,
 	})
 
 	if err != nil {
@@ -46,8 +50,9 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 		return
 	}
 	user.TOTPSecret = totpSecret.Secret()
+	user.Username = req.Username
 
-	if err := user.CreateUser(uc.db).Error; err != nil {
+	if err := user.CreateUser(uc.db); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}

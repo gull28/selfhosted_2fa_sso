@@ -7,5 +7,5 @@ import (
 )
 
 func Migrate(db *gorm.DB) error {
-	return db.AutoMigrate(&models.Service2fa{}, &models.User2fa{}, &models.UserServiceLink{})
+	return db.AutoMigrate(&models.Service2fa{}, &models.User2fa{}, &models.UserServiceLink{}, &models.SuperUser{})
 }
