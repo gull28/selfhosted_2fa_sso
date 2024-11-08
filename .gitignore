@@ -19,8 +19,6 @@
 .DS_Store
 Thumbs.db
 
-go.sum
-
 coverage.out
 coverage/
 
