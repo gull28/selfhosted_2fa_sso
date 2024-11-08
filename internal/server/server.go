@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"selfhosted_2fa_sso/config"
+	"selfhosted_2fa_sso/internal/ratelimit"
+	"selfhosted_2fa_sso/middleware"
 	"selfhosted_2fa_sso/routes"
 
 	"github.com/gin-gonic/gin"
@@ -23,6 +25,14 @@ type Server struct {
 
 func NewServer(db *gorm.DB, cfg *config.Config) *Server {
 	router := gin.Default()
+
+	ratelimiter := ratelimit.NewRateLimiter(10, 10)
+	rateMiddleware := middleware.RateLimiterMiddleware(ratelimiter)
+
+	router.LoadHTMLGlob("templates/*")
+	router.Static("/static", "./static")
+
+	router.Use(rateMiddleware)
 
 	s := &Server{
 		db:     db,
@@ -49,6 +59,11 @@ func (s *Server) setupRoutes() {
 	})
 
 	routes.RegisterUserRoutes(s.router, s.db)
+
+	sessionRoutes := s.router.Group("/session")
+	sessionRoutes.Use(middleware.AuthMiddleware(s.config.JWT.Secret))
+	routes.RegisterSessionRoutes(sessionRoutes, s.db)
+
 	routes.RegisterServiceRoutes(s.router, s.db)
 }
 
