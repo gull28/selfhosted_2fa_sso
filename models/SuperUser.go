@@ -18,7 +18,7 @@ func FindSuperUserRegistered(db *gorm.DB) (*SuperUser, error) {
 	return &user, err
 }
 
-func FindSuperUserById(db *gorm.DB, id uint) (*SuperUser, error) {
+func FindSuperUserByID(db *gorm.DB, id uint) (*SuperUser, error) {
 	var user SuperUser
 	err := db.First(&user, id).Error
 

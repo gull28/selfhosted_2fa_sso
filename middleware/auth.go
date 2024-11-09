@@ -46,7 +46,7 @@ func AuthMiddleware(db *gorm.DB, jwtSecret string) gin.HandlerFunc {
 		}
 
 		userID := uint(userIDFloat)
-		user, err := models.FindSuperUserById(db, userID)
+		user, err := models.FindSuperUserByID(db, userID)
 		if err != nil {
 			handleUnauthorized(c, isRequestingLoginScreen)
 			return

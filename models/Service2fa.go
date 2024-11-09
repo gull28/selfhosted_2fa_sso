@@ -5,12 +5,12 @@ import "gorm.io/gorm"
 type Service2fa struct {
 	gorm.Model
 
-	ID          uint `gorm:"uniqueIndex"`
-	Name        string
-	Description string
+	ID          uint   `json:"serviceId" gorm:"uniqueIndex"`
+	Name        string `json:"name" gorm:"unique;not null"`
+	Description string `json:"description" gorm:"not null"`
 }
 
-func (service *Service2fa) CreateService(db *gorm.DB) error {
+func (service *Service2fa) Create(db *gorm.DB) error {
 	return db.Create(&service).Error
 }
 

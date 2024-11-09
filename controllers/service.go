@@ -18,8 +18,36 @@ type BindRequest struct {
 	AuthUserID uint   `json:"authUserId" binding:"required"` // userId created in the 2fa server
 }
 
+type CreateServiceRequest struct {
+	ID          uint   `json:"serviceId" binding:"required"`
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description" binding:"required"`
+}
+
 func GetServiceController(db *gorm.DB) *ServiceController {
 	return &ServiceController{db: db}
+}
+
+func (sc *ServiceController) Create(c *gin.Context) {
+	var service models.Service2fa
+	if err := c.ShouldBindJSON(&service); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+		return
+	}
+
+	if err := service.Create(sc.db); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create service"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, service)
+}
+
+func (sc *ServiceController) Index(c *gin.Context) {
+	data := gin.H{
+		"Message": "Welcome to the session creation page",
+	}
+	c.HTML(http.StatusOK, "service.html", data)
 }
 
 func (sc *ServiceController) BindServiceTo2fa(c *gin.Context) {

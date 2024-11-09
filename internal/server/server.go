@@ -64,7 +64,9 @@ func (s *Server) setupRoutes() {
 	sessionRoutes.Use(middleware.AuthMiddleware(s.db, s.config.JWT.Secret))
 	routes.RegisterSessionRoutes(sessionRoutes, s.db, s.config)
 
-	routes.RegisterServiceRoutes(s.router, s.db)
+	serviceRoutes := s.router.Group("/service")
+	serviceRoutes.Use(middleware.AuthMiddleware(s.db, s.config.JWT.Secret))
+	routes.RegisterServiceRoutes(serviceRoutes, s.db)
 }
 
 func (s *Server) Start() error {
