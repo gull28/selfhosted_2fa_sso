@@ -13,5 +13,6 @@ func RegisterServiceRoutes(serviceRoutes *gin.RouterGroup, db *gorm.DB) {
 	serviceRoutes.GET("", serviceController.Index)
 	serviceRoutes.POST("create", serviceController.Create)
 	serviceRoutes.POST("bind", serviceController.BindServiceTo2fa)
+	serviceRoutes.DELETE(":id", serviceController.Delete)
 	// userRoutes.POST("/unbind", serviceControllerController)
 }

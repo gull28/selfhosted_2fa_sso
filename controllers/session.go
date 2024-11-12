@@ -19,8 +19,8 @@ type SessionController struct {
 }
 
 type SessionRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Username string `json:"username" binding:"required,min=3,max=20"`
+	Password string `json:"password" binding:"required,min=8,max=100"`
 }
 
 func GetSessionController(db *gorm.DB, cfg *config.Config) *SessionController {

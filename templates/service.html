@@ -1,13 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/css/index.css">
-</head>
-<body>
-    <div class="container">
-        Hello world123
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/static/css/index.css?v=1.1" />
+  </head>
+  <body>
+    <div class="container start">
+      <div class="service-content">
+        <h1>Current Services</h1>
+        <div class="services">
+          {{ range .items }}
+          <div class="service">
+            <div class="upper-service-content">
+              <p class="service-name">{{ .Name }}</p>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                fill="red"
+                class="bi bi-trash"
+                viewBox="0 0 16 16"
+                class="trash"
+                onclick="deleteService('{{ .ID }}', this)"
+                >
+                <path
+                  d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"
+                />
+                <path
+                  d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"
+                />
+              </svg>
+            </div>
+            <div class="description-container">
+              <div class="service-description">{{ .Description }}</div>
+              <button class="toggle-button" onclick="toggleDescription(this)">
+                Show more
+              </button>
+            </div>
+          </div>
+          {{ end }}
+        </div>
+      </div>
+      <div class="form-content">
+        <h1>Add a service</h1>
+        <form
+          id="serviceForm"
+          class="service-form"
+          method="post"
+          action="/service/create"
+          onsubmit="submitForm(event)"
+        >
+          <div class="section">
+            <label class="padding-x" for="name">Name</label>
+            <input type="text" name="name" id="name" required />
+          </div>
+
+          <div class="section">
+            <label class="padding-x" for="id">ID</label>
+            <input type="text" name="id" id="id" required />
+          </div>
+
+          <div class="section">
+            <label class="padding-x" for="description">Description</label>
+            <textarea
+              type="text"
+              rows="4"
+              cols="50"
+              name="description"
+              id="description"
+            ></textarea>
+          </div>
+
+          <button type="submit">Submit</button>
+        </form>
+      </div>
     </div>
-</body>
+  </body>
+
+  <script>
+    function submitForm(event) {
+      event.preventDefault();
+
+      const name = document.getElementById("name").value;
+      const id = document.getElementById("id").value;
+      const description = document.getElementById("description").value;
+
+      const data = {
+        name: name,
+        serviceId: parseInt(id, 10),
+        description: description,
+      };
+
+      fetch("/service/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          } else {
+            return response.json().then((err) => {
+              throw err;
+            });
+          }
+        })
+        .then((data) => {
+          updateServicesList(data);
+          document.getElementById("serviceForm").reset();
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("An error occurred: " + error.error);
+        });
+    }
+
+    function updateServicesList(services) {
+      const servicesContainer = document.querySelector(".services");
+      servicesContainer.innerHTML = "";
+
+      services.forEach((service) => {
+        const serviceElement = document.createElement("div");
+        serviceElement.classList.add("service");
+        serviceElement.innerHTML = `
+          <div class="upper-service-content">
+            <p class="service-name">${service.name}</p>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              fill="red"
+              class="bi bi-trash"
+              viewBox="0 0 16 16"
+              onclick="deleteService('${service.serviceId}', this)"
+            >
+            <path
+                  d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"
+                />
+                <path
+                  d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"
+                />
+            </svg>
+          </div>
+          <div class="description-container">
+            <div class="service-description">
+              ${service.description}
+            </div>
+            <button class="toggle-button" onclick="toggleDescription(this)">
+              Show more
+            </button>
+          </div>
+        `;
+        servicesContainer.appendChild(serviceElement);
+      });
+    }
+
+    function deleteService(id) {
+        console.log(id)
+        fetch(`/service/asdasd`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          } else {
+            return response.json().then((err) => {
+              throw err;
+            });
+          }
+        })
+        .then((data) => {
+          updateServicesList(data);
+          document.getElementById("serviceForm").reset();
+        })
+        .catch((error) => {
+          alert("An error occurred: " + error.error);
+        });
+    }
+  </script>
 </html>

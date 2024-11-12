@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"selfhosted_2fa_sso/models"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -40,14 +42,59 @@ func (sc *ServiceController) Create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, service)
+	data, err := models.GetAllServices(sc.db)
+
+	if err != nil {
+		c.JSON(http.StatusCreated, []string{})
+		return
+	}
+	c.JSON(http.StatusCreated, data)
+}
+
+func (sc *ServiceController) Delete(c *gin.Context) {
+	idParam := c.Param("id")
+
+	if idParam == "" {
+
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
+	}
+
+	idUint64, err := strconv.ParseUint(idParam, 10, 64)
+	if err != nil {
+		fmt.Printf("%v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return
+	}
+
+	id := uint(idUint64)
+
+	if err := models.DeleteService(sc.db, uint(id)); err != nil {
+		fmt.Printf("%v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+	}
+
+	data, err := models.GetAllServices(sc.db)
+
+	if err != nil {
+		fmt.Printf("%v", err)
+		c.JSON(http.StatusCreated, []string{})
+		return
+	}
+	c.JSON(http.StatusOK, data)
 }
 
 func (sc *ServiceController) Index(c *gin.Context) {
-	data := gin.H{
-		"Message": "Welcome to the session creation page",
+	data, err := models.GetAllServices(sc.db)
+	// items := []string{"hello", "world", "123312"}
+	if err != nil {
+		// render error page
+		return
 	}
-	c.HTML(http.StatusOK, "service.html", data)
+
+	c.HTML(http.StatusOK, "service.html", gin.H{
+		"items": data,
+	})
 }
 
 func (sc *ServiceController) BindServiceTo2fa(c *gin.Context) {

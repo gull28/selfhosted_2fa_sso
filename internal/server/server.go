@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"selfhosted_2fa_sso/config"
@@ -33,6 +34,8 @@ func NewServer(db *gorm.DB, cfg *config.Config) *Server {
 	router.Static("/static", "./static")
 
 	router.Use(rateMiddleware)
+
+	router.Use(NoCacheStatic())
 
 	s := &Server{
 		db:     db,
@@ -83,4 +86,16 @@ func (s *Server) Start() error {
 func (s *Server) Shutdown(ctx context.Context) error {
 	log.Println("Shutting down server...")
 	return s.httpServer.Shutdown(ctx)
+}
+
+// dev hot reload css :PP
+func NoCacheStatic() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.RequestURI, "/static/") {
+			c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+			c.Header("Pragma", "no-cache")
+			c.Header("Expires", "0")
+		}
+		c.Next()
+	}
 }

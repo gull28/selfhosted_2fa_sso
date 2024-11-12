@@ -7,27 +7,28 @@
 </head>
 <body>
     <div class="container">
-        <form id="loginForm" method="post" action="/session/create">
-            <div class="section">
-                <label class="padding-x" for="username">Username</label>
-                <input type="text" name="username" id="username" required />
-            </div>
+        <div class="subcontainer">
+            <form id="loginForm" method="post" action="/session/create">
+                <div class="section">
+                    <label class="padding-x" for="username">Username</label>
+                    <input type="text" name="username" id="username" required />
+                </div>
+        
+                <div class="section">
+                    <label class="padding-x" for="password">Password</label>
+                    <input type="password" name="password" id="password" required />
+                </div>
     
-            <div class="section">
-                <label class="padding-x" for="password">Password</label>
-                <input type="password" name="password" id="password" required />
-            </div>
-
-            <button type="submit">Submit</button>
-        </form>
-        <div id="responseMessage"></div> <!-- For displaying the response -->
+                <button type="submit">Submit</button>
+            </form>
+            <div id="responseMessage"></div> <!-- For displaying the response -->
+        </div>
     </div>
 
     <script>
         document.getElementById("loginForm").addEventListener("submit", async function(event) {
-            event.preventDefault(); // Prevent the default form submission
+            event.preventDefault(); 
 
-            // Gather form data
             const formData = new FormData(event.target);
             const data = {
                 username: formData.get("username"),
@@ -35,7 +36,6 @@
             };
 
             try {
-                // Send the form data to the server
                 const response = await fetch("/session/create", {
                     method: "POST",
                     headers: {
@@ -44,10 +44,10 @@
                     body: JSON.stringify(data)
                 });
 
-                // Check if the response is successful
                 if (response.ok) {
-                    const result = await response.json(); // Parse JSON response
+                    const result = await response.json(); 
                     document.getElementById("responseMessage").innerText = result.message || "Success!";
+                    window.location.href = 'http://localhost:8080/service';
                 } else {
                     const errorData = await response.json();
                     document.getElementById("responseMessage").innerText = errorData.error || "An error occurred.";

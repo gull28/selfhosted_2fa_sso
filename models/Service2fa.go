@@ -1,13 +1,19 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"fmt"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Service2fa struct {
-	gorm.Model
-
-	ID          uint   `json:"serviceId" gorm:"uniqueIndex"`
+	ID          uint   `json:"serviceId" gorm:"primaryKey"`
 	Name        string `json:"name" gorm:"unique;not null"`
 	Description string `json:"description" gorm:"not null"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   gorm.DeletedAt `json:"-" gorm:"index"`
 }
 
 func (service *Service2fa) Create(db *gorm.DB) error {
@@ -17,5 +23,20 @@ func (service *Service2fa) Create(db *gorm.DB) error {
 func GetServiceByID(db *gorm.DB, id string) (*Service2fa, error) {
 	var service Service2fa
 	err := db.First(&service, id).Error
+
 	return &service, err
+}
+
+func GetAllServices(db *gorm.DB) ([]*Service2fa, error) {
+	var services []*Service2fa
+	if err := db.Find(&services).Error; err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("%v", services)
+	return services, nil
+}
+
+func DeleteService(db *gorm.DB, id uint) error {
+	return db.Delete(&Service2fa{}, id).Error
 }
