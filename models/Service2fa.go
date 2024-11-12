@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -9,8 +8,8 @@ import (
 
 type Service2fa struct {
 	ID          uint   `json:"serviceId" gorm:"primaryKey"`
-	Name        string `json:"name" gorm:"unique;not null"`
-	Description string `json:"description" gorm:"not null"`
+	Name        string `json:"name" gorm:"unique;not null;size=20" binding:"required,min=3,max=20"`
+	Description string `json:"description" binding:"max=512" gorm:"size:512"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `json:"-" gorm:"index"`
@@ -33,7 +32,6 @@ func GetAllServices(db *gorm.DB) ([]*Service2fa, error) {
 		return nil, err
 	}
 
-	fmt.Printf("%v", services)
 	return services, nil
 }
 

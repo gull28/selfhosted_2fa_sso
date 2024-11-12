@@ -33,7 +33,7 @@ func GetServiceController(db *gorm.DB) *ServiceController {
 func (sc *ServiceController) Create(c *gin.Context) {
 	var service models.Service2fa
 	if err := c.ShouldBindJSON(&service); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data "})
 		return
 	}
 

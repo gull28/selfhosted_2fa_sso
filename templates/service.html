@@ -53,12 +53,13 @@
         >
           <div class="section">
             <label class="padding-x" for="name">Name</label>
-            <input type="text" name="name" id="name" required />
+            <input type="text" name="name" id="name" required minlength="3" maxlength="20" />
           </div>
 
           <div class="section">
             <label class="padding-x" for="id">ID</label>
-            <input type="text" name="id" id="id" required />
+            <!-- max is 18446744073709551615 -->
+            <input type="text" name="id" id="id" required minlength="8" maxlength="20" />
           </div>
 
           <div class="section">
