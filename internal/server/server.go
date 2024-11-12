@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"selfhosted_2fa_sso/config"
+	"selfhosted_2fa_sso/internal/ratelimit"
+	"selfhosted_2fa_sso/middleware"
 	"selfhosted_2fa_sso/routes"
 
 	"github.com/gin-gonic/gin"
@@ -23,6 +26,16 @@ type Server struct {
 
 func NewServer(db *gorm.DB, cfg *config.Config) *Server {
 	router := gin.Default()
+
+	ratelimiter := ratelimit.NewRateLimiter(10, 10)
+	rateMiddleware := middleware.RateLimiterMiddleware(ratelimiter)
+
+	router.LoadHTMLGlob("templates/*")
+	router.Static("/static", "./static")
+
+	router.Use(rateMiddleware)
+
+	router.Use(NoCacheStatic())
 
 	s := &Server{
 		db:     db,
@@ -49,7 +62,14 @@ func (s *Server) setupRoutes() {
 	})
 
 	routes.RegisterUserRoutes(s.router, s.db)
-	routes.RegisterServiceRoutes(s.router, s.db)
+
+	sessionRoutes := s.router.Group("/session")
+	sessionRoutes.Use(middleware.AuthMiddleware(s.db, s.config.JWT.Secret))
+	routes.RegisterSessionRoutes(sessionRoutes, s.db, s.config)
+
+	serviceRoutes := s.router.Group("/service")
+	serviceRoutes.Use(middleware.AuthMiddleware(s.db, s.config.JWT.Secret))
+	routes.RegisterServiceRoutes(serviceRoutes, s.db)
 }
 
 func (s *Server) Start() error {
@@ -66,4 +86,16 @@ func (s *Server) Start() error {
 func (s *Server) Shutdown(ctx context.Context) error {
 	log.Println("Shutting down server...")
 	return s.httpServer.Shutdown(ctx)
+}
+
+// dev hot reload css :PP
+func NoCacheStatic() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.RequestURI, "/static/") {
+			c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+			c.Header("Pragma", "no-cache")
+			c.Header("Expires", "0")
+		}
+		c.Next()
+	}
 }

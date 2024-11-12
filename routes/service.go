@@ -7,12 +7,12 @@ import (
 	"gorm.io/gorm"
 )
 
-func RegisterServiceRoutes(router *gin.Engine, db *gorm.DB) {
-	serviceControllerController := controllers.GetServiceController(db)
+func RegisterServiceRoutes(serviceRoutes *gin.RouterGroup, db *gorm.DB) {
+	serviceController := controllers.GetServiceController(db)
 
-	userRoutes := router.Group("/service")
-	{
-		userRoutes.POST("/bind", serviceControllerController.BindServiceTo2fa)
-		// userRoutes.POST("/unbind", serviceControllerController)
-	}
+	serviceRoutes.GET("", serviceController.Index)
+	serviceRoutes.POST("create", serviceController.Create)
+	serviceRoutes.POST("bind", serviceController.BindServiceTo2fa)
+	serviceRoutes.DELETE(":id", serviceController.Delete)
+	// userRoutes.POST("/unbind", serviceControllerController)
 }

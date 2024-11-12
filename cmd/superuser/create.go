@@ -1,4 +1,4 @@
-package superuser
+package main
 
 import (
 	"bufio"
@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 
 	"selfhosted_2fa_sso/config"
@@ -39,6 +40,16 @@ func main() {
 		username, _ = reader.ReadString('\n')
 		username = strings.TrimSpace(username)
 
+		if len(username) > 20 {
+			fmt.Println("Username too long, keep it under 20 characters!")
+			continue
+		}
+
+		if len(username) < 3 {
+			fmt.Println("Username too short, keep it above 2 characters!")
+			continue
+		}
+
 		var existingUser models.SuperUser
 		if err := database.Where("username = ?", username).First(&existingUser).Error; err == nil {
 			fmt.Println("Username already taken. Please enter a different username.")
@@ -47,9 +58,24 @@ func main() {
 		}
 	}
 
-	fmt.Print("Enter superuser password: ")
-	password, _ := reader.ReadString('\n')
-	password = strings.TrimSpace(password)
+	var password string
+	for {
+		fmt.Print("Enter superuser password: ")
+		password, _ := reader.ReadString('\n')
+		password = strings.TrimSpace(password)
+
+		if len(password) < 6 {
+			fmt.Println("Password must be at least 6 characters long")
+			continue
+		}
+
+		if len(password) >= 128 {
+			fmt.Println("Password must less than 128 characters long")
+			continue
+		}
+
+		break
+	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
@@ -61,6 +87,14 @@ func main() {
 	superuser := models.SuperUser{
 		Username:     username,
 		PasswordHash: string(hashedPassword),
+	}
+
+	validate := validator.New()
+
+	if err := validate.Struct(&superuser); err != nil {
+		fmt.Printf("Validation error: %v\n", err)
+		fmt.Println("Try again")
+		return
 	}
 
 	err = superuser.Create(database)
