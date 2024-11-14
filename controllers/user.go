@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"net/http"
+	"selfhosted_2fa_sso/config"
 	"selfhosted_2fa_sso/models"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pquerna/otp/totp"
@@ -10,7 +12,8 @@ import (
 )
 
 type UserController struct {
-	db *gorm.DB
+	db  *gorm.DB
+	cfg *config.Config
 }
 
 type VerifyRequest struct {
@@ -22,8 +25,13 @@ type CreateRequest struct {
 	Username string `json:"username" binding:"required"`
 }
 
-func GetUserController(db *gorm.DB) *UserController {
-	return &UserController{db: db}
+type CheckValidRequest struct {
+	ServiceID uint   `json:"serviceId" binding:"required"`
+	UserID    string `json:"userId" binding:"required"`
+}
+
+func GetUserController(db *gorm.DB, cfg *config.Config) *UserController {
+	return &UserController{db: db, cfg: cfg}
 }
 
 func (uc *UserController) Create(c *gin.Context) {
@@ -75,7 +83,15 @@ func (uc *UserController) Verify(c *gin.Context) {
 		return
 	}
 
+	userService.ValidUntil = time.Now().Add(time.Duration(uc.cfg.Auth.ValidFor) * time.Minute)
+
+	if err := uc.db.Save(&userService).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user service link"})
+		return
+	}
+
 	if totp.Validate(req.Code, userService.User2fa.TOTPSecret) {
+
 		c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Code is valid"})
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "failure", "message": "Invalid code"})
@@ -83,5 +99,23 @@ func (uc *UserController) Verify(c *gin.Context) {
 }
 
 func (uc *UserController) CheckSession(c *gin.Context) {
-	// todo
+	var request CheckValidRequest
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+		return
+	}
+
+	isValid, err := models.IsAuthValid(uc.db, request.UserID, request.ServiceID)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"message": "Failed to fetch user-service link"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Database error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"valid": isValid})
 }

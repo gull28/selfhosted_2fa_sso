@@ -61,7 +61,7 @@ func (s *Server) setupRoutes() {
 		c.JSON(http.StatusOK, gin.H{"status": "OK"})
 	})
 
-	routes.RegisterUserRoutes(s.router, s.db)
+	routes.RegisterUserRoutes(s.router, s.db, s.config)
 
 	sessionRoutes := s.router.Group("/session")
 	sessionRoutes.Use(middleware.AuthMiddleware(s.db, s.config.JWT.Secret))
