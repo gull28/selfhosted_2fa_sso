@@ -15,6 +15,9 @@ type Config struct {
 		URL            string
 		MaxConnections int
 	}
+	Auth struct {
+		ValidFor uint16
+	}
 	JWT struct {
 		Secret     string
 		Expiration int

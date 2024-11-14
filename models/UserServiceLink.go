@@ -1,15 +1,19 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type UserServiceLink struct {
 	gorm.Model
 
-	UserID    string `gorm:"index"` // outer service user id
-	ServiceID uint   `gorm:"index"`
+	ServiceUserID string `gorm:"index"` // unknown format
+	ValidUntil    time.Time
 
-	User2faID    uint `gorm:"index"`
-	Service2faID uint `gorm:"index"`
+	User2faID    string `gorm:"index"`
+	Service2faID uint   `gorm:"index"`
 
 	User2fa    User2fa    `gorm:"foreignKey:User2faID;constraint:OnDelete:CASCADE;"`
 	Service2fa Service2fa `gorm:"foreignKey:Service2faID;constraint:OnDelete:CASCADE;"`
@@ -21,4 +25,27 @@ func (UserServiceLink) TableName() string {
 
 func (usl *UserServiceLink) CreateUserServiceLink(db *gorm.DB) error {
 	return db.Create(usl).Error
+}
+
+func (usl *UserServiceLink) IsUserAlreadyBound(db *gorm.DB) bool {
+	var userServiceLink UserServiceLink
+
+	result := db.Where("user2fa_id = ? AND service2fa_id = ?", usl.User2faID, usl.Service2faID).Find(&userServiceLink)
+	if result.Error != nil {
+		return false
+	}
+
+	return result.RowsAffected > 0
+}
+
+func IsAuthValid(db *gorm.DB, user2faID string, service2faID uint) (bool, error) {
+	var userServiceLink UserServiceLink
+
+	err := db.Where("service_user_id = ? AND service2fa_id = ?", user2faID, service2faID).Find(&userServiceLink).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	return userServiceLink.ValidUntil.After(time.Now()), nil
 }

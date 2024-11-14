@@ -6,8 +6,7 @@ import (
 )
 
 type User2fa struct {
-	gorm.Model
-	UUID       string `gorm:"uniqueIndex" json:"uuid"`
+	ID         string `gorm:"primaryKey"`
 	Username   string `gorm:"unique" json:"username" binding:"required,min=3,max=20"`
 	TOTPSecret string `gorm:"not null" json:"totp_secret" binding:"required"`
 }
@@ -30,10 +29,9 @@ func DeleteUser(db *gorm.DB, id uint) error {
 	return db.Delete(&User2fa{}, id).Error
 }
 
-// hooks
 func (u *User2fa) BeforeCreate(_ *gorm.DB) (err error) {
-	if u.UUID == "" {
-		u.UUID = uuid.New().String()
+	if u.ID == "" {
+		u.ID = uuid.New().String()
 	}
 	return
 }
