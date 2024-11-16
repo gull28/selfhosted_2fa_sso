@@ -10,9 +10,9 @@ Single sign-on server with multiple service support.
 - Validate users based on active session for specific service or with a TOTP-code. (Will make a mobile app for this)
 
 ## API Docs (WIP)
-*Read this if you're interested in endpoint structure!*
+*Read this if you're interested in API docs*
 
-[example.com](url)
+[https://gull28.github.io/selfhosted_2fa_sso/api-docs/](url)
 
 ## How to use
 
