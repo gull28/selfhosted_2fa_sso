@@ -12,7 +12,7 @@ Single sign-on server with multiple service support.
 ## API Docs (WIP)
 *Read this if you're interested in API docs*
 
-[https://gull28.github.io/selfhosted_2fa_sso/api-docs/](url)
+[https://gull28.github.io/selfhosted_2fa_sso/](url)
 
 ## How to use
 
