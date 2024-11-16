@@ -12,8 +12,7 @@ Single sign-on server with multiple service support.
 ## API Docs (WIP)
 *Read this if you're interested in API docs*
 
-[https://gull28.github.io/selfhosted_2fa_sso/](url)
-
+[docs](https://gull28.github.io/selfhosted_2fa_sso/)
 ## How to use
 
 I encourage the usage of Docker because of how simple and reproducible it is.
