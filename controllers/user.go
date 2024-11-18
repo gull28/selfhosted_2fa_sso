@@ -25,6 +25,12 @@ type CreateRequest struct {
 	Username string `json:"username" binding:"required"`
 }
 
+type UpdateRequest struct {
+	Username    string `json:"username" binding:"required"`
+	OldUsername string `json:"oldUsername" binding:"required"`
+	Code        string `json:"code" binding:"required"`
+}
+
 type CheckValidRequest struct {
 	ServiceID uint   `json:"serviceId" binding:"required"`
 	UserID    string `json:"userId" binding:"required"`
@@ -44,7 +50,7 @@ func (uc *UserController) Create(c *gin.Context) {
 
 	var existingUser models.User2fa
 	if err := uc.db.Where("username = ?", req.Username).First(&existingUser).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Username or email already exists"})
+		c.JSON(http.StatusConflict, gin.H{"error": "Username already exists"})
 		return
 	}
 
@@ -66,6 +72,47 @@ func (uc *UserController) Create(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, user)
+}
+
+func (uc *UserController) Update(c *gin.Context) {
+	var req UpdateRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid data"})
+		return
+	}
+
+	var existingUser models.User2fa
+	if err := uc.db.Where("username = ?", req.Username).First(&existingUser); err == nil {
+		c.JSON(http.StatusConflict, gin.H{"message": "Username already exists"})
+		return
+	}
+
+	var user models.User2fa
+	if err := uc.db.Where("username = ?", req.OldUsername).First(&user); err != nil {
+		c.JSON(http.StatusConflict, gin.H{"message": "Couldn't find current user"})
+		return
+	}
+
+	totpSecret, err := totp.Generate(totp.GenerateOpts{
+		Issuer:      "selfhosted_2fa_sso",
+		AccountName: req.Username,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Couldn't generate TOTP"})
+		return
+	}
+
+	user.Username = req.Username
+	user.TOTPSecret = totpSecret.Secret()
+
+	if err := user.UpdateUser(uc.db); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
 }
 
 func (uc *UserController) Verify(c *gin.Context) {

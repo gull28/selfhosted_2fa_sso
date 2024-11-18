@@ -6,7 +6,7 @@ import (
 )
 
 type User2fa struct {
-	ID         string `gorm:"primaryKey"`
+	ID         string `gorm:"primaryKey;type:text" json:"id"`
 	Username   string `gorm:"unique" json:"username" binding:"required,min=3,max=20"`
 	TOTPSecret string `gorm:"not null" json:"totp_secret" binding:"required"`
 }

@@ -12,10 +12,10 @@ type UserServiceLink struct {
 	ServiceUserID string `gorm:"index"` // unknown format
 	ValidUntil    time.Time
 
-	User2faID    string `gorm:"index"`
+	User2faID    string `gorm:"index;type:text"`
 	Service2faID uint   `gorm:"index"`
 
-	User2fa    User2fa    `gorm:"foreignKey:User2faID;constraint:OnDelete:CASCADE;"`
+	User2fa    User2fa    `gorm:"foreignKey:User2faID;references:ID;constraint:OnDelete:CASCADE;"`
 	Service2fa Service2fa `gorm:"foreignKey:Service2faID;constraint:OnDelete:CASCADE;"`
 }
 

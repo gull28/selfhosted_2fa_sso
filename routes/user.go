@@ -14,6 +14,7 @@ func RegisterUserRoutes(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	userRoutes := router.Group("/users")
 	{
 		userRoutes.POST("", userController.Create)
+		userRoutes.POST("update", userController.Update)
 		userRoutes.POST("verify", userController.Verify)
 		userRoutes.POST("session/check", userController.CheckSession)
 	}
