@@ -125,7 +125,7 @@ func (uc *UserController) Verify(c *gin.Context) {
 
 	var userService models.UserServiceLink
 
-	if err := uc.db.Where("service_user_id = ?", req.ServiceUserID).First(&userService).Error; err != nil {
+	if err := uc.db.Preload("User2fa").Preload("Service2fa").Where("service_user_id = ?", req.ServiceUserID).First(&userService).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
@@ -138,7 +138,6 @@ func (uc *UserController) Verify(c *gin.Context) {
 	}
 
 	if totp.Validate(req.Code, userService.User2fa.TOTPSecret) {
-
 		c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Code is valid"})
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "failure", "message": "Invalid code"})

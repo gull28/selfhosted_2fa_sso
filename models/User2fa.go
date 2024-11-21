@@ -15,10 +15,14 @@ func (u *User2fa) CreateUser(db *gorm.DB) error {
 	return db.Create(&u).Error
 }
 
-func GetUserByID(db *gorm.DB, id uint) (*User2fa, error) {
+func GetUserByID(db *gorm.DB, id string) (*User2fa, error) {
 	var user User2fa
-	err := db.First(&user, id).Error
-	return &user, err
+	err := db.Where("id = ?", id).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 func (u *User2fa) UpdateUser(db *gorm.DB) error {

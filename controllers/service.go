@@ -19,8 +19,8 @@ type BindRequest struct {
 	ServiceID string `json:"serviceId" binding:"required"`
 	// used for hooks in service so that user doesnt have to enter an id or username on each totp request
 	UserID     string `json:"userId" binding:"required"`     // userId created in the service server
-	Username   uint   `json:"username" binding:"required"`   // userId created in the 2fa server
-	AuthUserID uint   `json:"authUserId" binding:"required"` // userId created in the 2fa server
+	Username   string `json:"username" binding:"required"`   // userId created in the 2fa server
+	AuthUserID string `json:"authUserId" binding:"required"` // userId created in the 2fa server
 }
 
 type CreateServiceRequest struct {
@@ -128,7 +128,8 @@ func (sc *ServiceController) BindServiceTo2fa(c *gin.Context) {
 	}
 
 	if userServiceLink.IsUserAlreadyBound(sc.db) {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "User already bound!"})
+		c.JSON(http.StatusOK, gin.H{"message": "User already bound!"})
+		return
 	}
 
 	if err := sc.db.Create(&userServiceLink).Error; err != nil {
