@@ -7,7 +7,7 @@ import (
 )
 
 type Service2fa struct {
-	ID          uint   `json:"serviceId" gorm:"primaryKey"`
+	ID          string `json:"serviceId" gorm:"primaryKey"`
 	Name        string `json:"name" gorm:"unique;not null;size=20" binding:"required,min=3,max=20"`
 	Description string `json:"description" binding:"max=512" gorm:"size:512"`
 	CreatedAt   time.Time

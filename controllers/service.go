@@ -23,11 +23,19 @@ type BindRequest struct {
 	AuthUserID string `json:"authUserId" binding:"required"` // userId created in the 2fa server
 }
 
-type CreateServiceRequest struct {
-	ID          uint   `json:"serviceId" binding:"required"`
-	Name        string `json:"name" binding:"required"`
-	Description string `json:"description" binding:"required"`
+type ServiceItem struct {
+	ServiceID   string    `json:"serviceId" binding:"required"`
+	Name        string    `json:"name" binding:"required"`
+	Description string    `json:"username" binding:"required"`
+	Enabled     bool      `json:"enabled" binding:"required"`
+	ValidUntil  time.Time `json:"validUntil" binding:"required"`
 }
+
+// type CreateServiceRequest struct {
+// 	ID          string `json:"serviceId" binding:"required"`
+// 	Name        string `json:"name" binding:"required"`
+// 	Description string `json:"description" binding:"required"`
+// }
 
 func GetServiceController(db *gorm.DB) *ServiceController {
 	return &ServiceController{db: db}
@@ -52,6 +60,34 @@ func (sc *ServiceController) Create(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, data)
+}
+
+func (sc *ServiceController) Fetch(c *gin.Context) {
+	userId := c.Query("authUserId")
+
+	userServiceLinks, err := models.FetchUserServiceLinks(sc.db, userId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "User with given userId not found"})
+	}
+
+	if len(userServiceLinks) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"message": "No service links found for the user"})
+		return
+	}
+
+	var serviceItem []ServiceItem
+
+	for _, v := range userServiceLinks {
+		serviceItem = append(serviceItem, ServiceItem{
+			ServiceID:   v.Service2faID,
+			Name:        v.Service2fa.Name,
+			Description: v.Service2fa.Description,
+			ValidUntil:  v.ValidUntil,
+			Enabled:     v.Enabled,
+		})
+	}
+
+	c.JSON(http.StatusAccepted, serviceItem)
 }
 
 func (sc *ServiceController) Delete(c *gin.Context) {

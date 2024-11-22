@@ -68,7 +68,7 @@ func (s *Server) setupRoutes() {
 	routes.RegisterSessionRoutes(sessionRoutes, s.db, s.config)
 
 	serviceRoutes := s.router.Group("/service")
-	// serviceRoutes.Use(middleware.AuthMiddleware(s.db, s.config.JWT.Secret))
+	serviceRoutes.Use(middleware.AuthMiddleware(s.db, s.config.JWT.Secret))
 	routes.RegisterServiceRoutes(serviceRoutes, s.db)
 }
 

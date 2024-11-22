@@ -10,7 +10,8 @@ import (
 func RegisterServiceRoutes(serviceRoutes *gin.RouterGroup, db *gorm.DB) {
 	serviceController := controllers.GetServiceController(db)
 
-	serviceRoutes.GET("", serviceController.Index)
+	serviceRoutes.GET("", serviceController.Fetch)
+	serviceRoutes.GET("create", serviceController.Index)
 	serviceRoutes.POST("create", serviceController.Create)
 	serviceRoutes.POST("bind", serviceController.BindServiceTo2fa)
 	serviceRoutes.DELETE(":id", serviceController.Delete)
