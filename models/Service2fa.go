@@ -35,6 +35,8 @@ func GetAllServices(db *gorm.DB) ([]*Service2fa, error) {
 	return services, nil
 }
 
-func DeleteService(db *gorm.DB, id uint) error {
-	return db.Delete(&Service2fa{}, id).Error
+func DeleteService(db *gorm.DB, id string) error {
+	var service Service2fa
+
+	return db.Delete(&service, id).Error
 }

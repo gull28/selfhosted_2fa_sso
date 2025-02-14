@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/static/css/index.css">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
     <div class="container">
@@ -47,7 +48,7 @@
                 if (response.ok) {
                     const result = await response.json(); 
                     document.getElementById("responseMessage").innerText = result.message || "Success!";
-                    window.location.href = 'http://localhost:8080/service';
+                    window.location.href = 'http://localhost:8080/service/create';
                 } else {
                     const errorData = await response.json();
                     document.getElementById("responseMessage").innerText = errorData.error || "An error occurred.";

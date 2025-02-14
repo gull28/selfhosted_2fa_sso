@@ -14,17 +14,16 @@ import (
 	"selfhosted_2fa_sso/models"
 )
 
-//nolint:unused
 func main() {
 	reader := bufio.NewReader(os.Stdin)
 	cfg, err := config.LoadConfig()
 
 	if err != nil {
-		fmt.Printf("Error loading the config %v", err)
+		fmt.Printf("Error loading the config: %v\n", err)
+		os.Exit(1)
 	}
 
 	database, err := db.ConnectDatabase(cfg.Database.URL)
-
 	if err != nil {
 		fmt.Println("Failed to initialize the database:", err)
 		os.Exit(1)
@@ -61,7 +60,7 @@ func main() {
 	var password string
 	for {
 		fmt.Print("Enter superuser password: ")
-		password, _ := reader.ReadString('\n')
+		password, _ = reader.ReadString('\n')
 		password = strings.TrimSpace(password)
 
 		if len(password) < 6 {
@@ -70,7 +69,7 @@ func main() {
 		}
 
 		if len(password) >= 128 {
-			fmt.Println("Password must less than 128 characters long")
+			fmt.Println("Password must be less than 128 characters long")
 			continue
 		}
 
@@ -78,7 +77,6 @@ func main() {
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-
 	if err != nil {
 		fmt.Printf("Failed to hash password: %v\n", err)
 		os.Exit(1)
@@ -90,17 +88,16 @@ func main() {
 	}
 
 	validate := validator.New()
-
 	if err := validate.Struct(&superuser); err != nil {
 		fmt.Printf("Validation error: %v\n", err)
 		fmt.Println("Try again")
 		return
 	}
 
-	err = superuser.Create(database)
-
-	if err != nil {
-		fmt.Printf("Error creating user %v", err)
+	if err := database.Create(&superuser).Error; err != nil {
+		fmt.Printf("Error creating user: %v\n", err)
 		os.Exit(1)
 	}
+
+	fmt.Println("Superuser created successfully!")
 }

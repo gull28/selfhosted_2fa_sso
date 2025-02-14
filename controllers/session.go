@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"selfhosted_2fa_sso/config"
 	"selfhosted_2fa_sso/models"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -34,6 +35,24 @@ func (sc *SessionController) Index(c *gin.Context) {
 	c.HTML(http.StatusOK, "session.html", data)
 }
 
+func (sc *SessionController) Delete(c *gin.Context) {
+	c.SetCookie(
+		"auth_token",
+		"",
+		-1,
+		"/",
+		"",
+		true,
+		true,
+	)
+
+	c.Set("user", nil)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Logged out successfully",
+	})
+}
+
 func (sc *SessionController) Create(c *gin.Context) {
 	var req SessionRequest
 
@@ -44,21 +63,27 @@ func (sc *SessionController) Create(c *gin.Context) {
 
 	var user models.SuperUser
 	if err := sc.db.Where("username = ?", req.Username).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
 
-	if !checkPasswordHash(req.Password, user.PasswordHash) {
+	fmt.Printf("Password from request: %s\n", req.Password)
+	fmt.Printf("Hashed password from DB: %s\n", user.PasswordHash)
+
+	password := strings.TrimSpace(req.Password)
+
+	if !checkPasswordHash(password, user.PasswordHash) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
 	}
-
-	fmt.Println("session created success !")
 
 	token, err := generateJWT(user.ID, sc.cfg.JWT.Secret)
-
 	if err != nil {
-		fmt.Printf("%v", err)
+		fmt.Printf("JWT generation error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create session"})
 		return
 	}

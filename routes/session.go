@@ -13,4 +13,5 @@ func RegisterSessionRoutes(sessionRoutes *gin.RouterGroup, db *gorm.DB, cfg *con
 
 	sessionRoutes.GET("create", sessionController.Index)
 	sessionRoutes.POST("create", sessionController.Create)
+	sessionRoutes.DELETE("logout", sessionController.Delete)
 }

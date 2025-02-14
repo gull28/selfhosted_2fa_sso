@@ -28,9 +28,9 @@ func (usl *UserServiceLink) CreateUserServiceLinks(db *gorm.DB) error {
 	return db.Create(usl).Error
 }
 
-func FetchUserServiceLinks(db *gorm.DB, userId string) ([]UserServiceLink, error) {
+func FetchUserServiceLinks(db *gorm.DB, userID string) ([]UserServiceLink, error) {
 	var userServiceLinks []UserServiceLink
-	if err := db.Preload("User2fa").Preload("Service2fa").Where("user_2fa_id = ?", userId).Find(&userServiceLinks).Error; err != nil {
+	if err := db.Preload("User2fa").Preload("Service2fa").Where("user_2fa_id = ?", userID).Find(&userServiceLinks).Error; err != nil {
 		return nil, err
 	}
 

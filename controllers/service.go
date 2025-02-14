@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"selfhosted_2fa_sso/models"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -44,6 +43,7 @@ func GetServiceController(db *gorm.DB) *ServiceController {
 func (sc *ServiceController) Create(c *gin.Context) {
 	var service models.Service2fa
 	if err := c.ShouldBindJSON(&service); err != nil {
+		fmt.Printf("%v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data "})
 		return
 	}
@@ -63,22 +63,27 @@ func (sc *ServiceController) Create(c *gin.Context) {
 }
 
 func (sc *ServiceController) Fetch(c *gin.Context) {
-	userId := c.Query("authUserId")
 
-	userServiceLinks, err := models.FetchUserServiceLinks(sc.db, userId)
+	userID := c.Param("id")
+
+	fmt.Println("here")
+	userServiceLinks, err := models.FetchUserServiceLinks(sc.db, userID)
 	if err != nil {
+		fmt.Printf("error 1 %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"message": "User with given userId not found"})
 	}
 
 	if len(userServiceLinks) == 0 {
+		fmt.Printf("error 2")
+
 		c.JSON(http.StatusNotFound, gin.H{"message": "No service links found for the user"})
 		return
 	}
 
-	var serviceItem []ServiceItem
+	var serviceItems []ServiceItem
 
 	for _, v := range userServiceLinks {
-		serviceItem = append(serviceItem, ServiceItem{
+		serviceItems = append(serviceItems, ServiceItem{
 			ServiceID:   v.Service2faID,
 			Name:        v.Service2fa.Name,
 			Description: v.Service2fa.Description,
@@ -87,28 +92,18 @@ func (sc *ServiceController) Fetch(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusAccepted, serviceItem)
+	c.JSON(http.StatusAccepted, gin.H{"services": serviceItems})
 }
 
 func (sc *ServiceController) Delete(c *gin.Context) {
 	idParam := c.Param("id")
 
 	if idParam == "" {
-
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
-	idUint64, err := strconv.ParseUint(idParam, 10, 64)
-	if err != nil {
-		fmt.Printf("%v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
-		return
-	}
-
-	id := uint(idUint64)
-
-	if err := models.DeleteService(sc.db, uint(id)); err != nil {
+	if err := models.DeleteService(sc.db, idParam); err != nil {
 		fmt.Printf("%v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 	}
