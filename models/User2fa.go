@@ -25,6 +25,27 @@ func GetUserByID(db *gorm.DB, id string) (*User2fa, error) {
 	return &user, nil
 }
 
+func GetUserByUsername(db *gorm.DB, username string) (*User2fa, error) {
+	var user User2fa
+
+	err := db.Where("username = ?", username).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func FetchAllUsers(db *gorm.DB) ([]*User2fa, error) {
+	var users []*User2fa
+	err := db.Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (u *User2fa) UpdateUser(db *gorm.DB) error {
 	return db.Save(u).Error
 }

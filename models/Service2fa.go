@@ -29,7 +29,7 @@ func GetServiceByID(db *gorm.DB, id string) (*Service2fa, error) {
 func GetAllServices(db *gorm.DB) ([]*Service2fa, error) {
 	var services []*Service2fa
 	if err := db.Find(&services).Error; err != nil {
-		return nil, err
+		return []*Service2fa{}, err
 	}
 
 	return services, nil

@@ -17,17 +17,16 @@ type ServiceController struct {
 type BindRequest struct {
 	ServiceID string `json:"serviceId" binding:"required"`
 	// used for hooks in service so that user doesnt have to enter an id or username on each totp request
-	UserID     string `json:"userId" binding:"required"`     // userId created in the service server
-	Username   string `json:"username" binding:"required"`   // userId created in the 2fa server
-	AuthUserID string `json:"authUserId" binding:"required"` // userId created in the 2fa server
+	UserID   string `json:"userId" binding:"required"`   // userId created in the service server
+	Username string `json:"username" binding:"required"` // userId created in the 2fa server
 }
 
 type ServiceItem struct {
 	ServiceID   string    `json:"serviceId" binding:"required"`
 	Name        string    `json:"name" binding:"required"`
 	Description string    `json:"username" binding:"required"`
-	Enabled     bool      `json:"enabled" binding:"required"`
-	ValidUntil  time.Time `json:"validUntil" binding:"required"`
+	Enabled     bool      `json:"enabled"`
+	ValidUntil  time.Time `json:"validUntil"`
 }
 
 // type CreateServiceRequest struct {
@@ -66,21 +65,16 @@ func (sc *ServiceController) Fetch(c *gin.Context) {
 
 	userID := c.Param("id")
 
-	fmt.Println("here")
-	userServiceLinks, err := models.FetchUserServiceLinks(sc.db, userID)
+	userServiceLinks := models.FetchUserServiceLinks(sc.db, userID)
+
+	nonBindedServices, err := models.GetAllServices(sc.db)
+
 	if err != nil {
 		fmt.Printf("error 1 %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"message": "User with given userId not found"})
 	}
 
-	if len(userServiceLinks) == 0 {
-		fmt.Printf("error 2")
-
-		c.JSON(http.StatusNotFound, gin.H{"message": "No service links found for the user"})
-		return
-	}
-
-	var serviceItems []ServiceItem
+	serviceItems := []ServiceItem{}
 
 	for _, v := range userServiceLinks {
 		serviceItems = append(serviceItems, ServiceItem{
@@ -92,7 +86,18 @@ func (sc *ServiceController) Fetch(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{"services": serviceItems})
+	nonBindedServiceItems := []ServiceItem{}
+
+	for _, nonBindedService := range nonBindedServices {
+		nonBindedServiceItems = append(nonBindedServiceItems, ServiceItem{
+			ServiceID:   nonBindedService.ID,
+			Name:        nonBindedService.Name,
+			Description: nonBindedService.Description,
+		})
+	}
+
+	fmt.Printf("%v serviceItmes", serviceItems)
+	c.JSON(http.StatusOK, gin.H{"services": serviceItems, "nonBoundServices": nonBindedServiceItems})
 }
 
 func (sc *ServiceController) Delete(c *gin.Context) {
@@ -120,9 +125,8 @@ func (sc *ServiceController) Delete(c *gin.Context) {
 
 func (sc *ServiceController) Index(c *gin.Context) {
 	data, err := models.GetAllServices(sc.db)
-	// items := []string{"hello", "world", "123312"}
+
 	if err != nil {
-		// render error page
 		return
 	}
 
@@ -145,7 +149,7 @@ func (sc *ServiceController) BindServiceTo2fa(c *gin.Context) {
 		return
 	}
 
-	user, err := models.GetUserByID(sc.db, bindRequest.AuthUserID)
+	user, err := models.GetUserByUsername(sc.db, bindRequest.Username)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "User not found"})
 		return
