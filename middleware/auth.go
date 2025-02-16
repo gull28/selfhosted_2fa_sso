@@ -17,7 +17,7 @@ func AuthMiddleware(db *gorm.DB, jwtSecret string) gin.HandlerFunc {
 		tokenString, err := c.Cookie("auth_token")
 
 		if err != nil {
-			handleUnauthorized(c, isRequestingLoginScreen)
+			HandleUnauthorized(c, isRequestingLoginScreen)
 			return
 		}
 
@@ -29,31 +29,31 @@ func AuthMiddleware(db *gorm.DB, jwtSecret string) gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			handleUnauthorized(c, isRequestingLoginScreen)
+			HandleUnauthorized(c, isRequestingLoginScreen)
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			handleUnauthorized(c, isRequestingLoginScreen)
+			HandleUnauthorized(c, isRequestingLoginScreen)
 			return
 		}
 
 		userIDFloat, ok := claims["user_id"].(float64)
 		if !ok {
-			handleUnauthorized(c, isRequestingLoginScreen)
+			HandleUnauthorized(c, isRequestingLoginScreen)
 			return
 		}
 
 		userID := uint(userIDFloat)
 		user, err := models.FindSuperUserByID(db, userID)
 		if err != nil {
-			handleUnauthorized(c, isRequestingLoginScreen)
+			HandleUnauthorized(c, isRequestingLoginScreen)
 			return
 		}
 
 		if isRequestingLoginScreen {
-			c.Redirect(http.StatusFound, "/services")
+			c.Redirect(http.StatusFound, "/service/create")
 			c.Abort()
 			return
 		}
@@ -63,7 +63,7 @@ func AuthMiddleware(db *gorm.DB, jwtSecret string) gin.HandlerFunc {
 	}
 }
 
-func handleUnauthorized(c *gin.Context, isRequestingLoginScreen bool) {
+func HandleUnauthorized(c *gin.Context, isRequestingLoginScreen bool) {
 	if !isRequestingLoginScreen {
 		c.Redirect(http.StatusFound, "/session/create")
 		c.Abort()

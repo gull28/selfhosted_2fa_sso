@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"selfhosted_2fa_sso/models"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -18,16 +17,23 @@ type ServiceController struct {
 type BindRequest struct {
 	ServiceID string `json:"serviceId" binding:"required"`
 	// used for hooks in service so that user doesnt have to enter an id or username on each totp request
-	UserID     string `json:"userId" binding:"required"`     // userId created in the service server
-	Username   string `json:"username" binding:"required"`   // userId created in the 2fa server
-	AuthUserID string `json:"authUserId" binding:"required"` // userId created in the 2fa server
+	UserID   string `json:"userId" binding:"required"`   // userId created in the service server
+	Username string `json:"username" binding:"required"` // userId created in the 2fa server
 }
 
-type CreateServiceRequest struct {
-	ID          uint   `json:"serviceId" binding:"required"`
-	Name        string `json:"name" binding:"required"`
-	Description string `json:"description" binding:"required"`
+type ServiceItem struct {
+	ServiceID   string    `json:"serviceId" binding:"required"`
+	Name        string    `json:"name" binding:"required"`
+	Description string    `json:"username" binding:"required"`
+	Enabled     bool      `json:"enabled"`
+	ValidUntil  time.Time `json:"validUntil"`
 }
+
+// type CreateServiceRequest struct {
+// 	ID          string `json:"serviceId" binding:"required"`
+// 	Name        string `json:"name" binding:"required"`
+// 	Description string `json:"description" binding:"required"`
+// }
 
 func GetServiceController(db *gorm.DB) *ServiceController {
 	return &ServiceController{db: db}
@@ -36,6 +42,7 @@ func GetServiceController(db *gorm.DB) *ServiceController {
 func (sc *ServiceController) Create(c *gin.Context) {
 	var service models.Service2fa
 	if err := c.ShouldBindJSON(&service); err != nil {
+		fmt.Printf("%v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data "})
 		return
 	}
@@ -54,25 +61,54 @@ func (sc *ServiceController) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, data)
 }
 
+func (sc *ServiceController) Fetch(c *gin.Context) {
+
+	userID := c.Param("id")
+
+	userServiceLinks := models.FetchUserServiceLinks(sc.db, userID)
+
+	nonBindedServices, err := models.GetAllServices(sc.db)
+
+	if err != nil {
+		fmt.Printf("error 1 %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"message": "User with given userId not found"})
+	}
+
+	serviceItems := []ServiceItem{}
+
+	for _, v := range userServiceLinks {
+		serviceItems = append(serviceItems, ServiceItem{
+			ServiceID:   v.Service2faID,
+			Name:        v.Service2fa.Name,
+			Description: v.Service2fa.Description,
+			ValidUntil:  v.ValidUntil,
+			Enabled:     v.Enabled,
+		})
+	}
+
+	nonBindedServiceItems := []ServiceItem{}
+
+	for _, nonBindedService := range nonBindedServices {
+		nonBindedServiceItems = append(nonBindedServiceItems, ServiceItem{
+			ServiceID:   nonBindedService.ID,
+			Name:        nonBindedService.Name,
+			Description: nonBindedService.Description,
+		})
+	}
+
+	fmt.Printf("%v serviceItmes", serviceItems)
+	c.JSON(http.StatusOK, gin.H{"services": serviceItems, "nonBoundServices": nonBindedServiceItems})
+}
+
 func (sc *ServiceController) Delete(c *gin.Context) {
 	idParam := c.Param("id")
 
 	if idParam == "" {
-
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
-	idUint64, err := strconv.ParseUint(idParam, 10, 64)
-	if err != nil {
-		fmt.Printf("%v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
-		return
-	}
-
-	id := uint(idUint64)
-
-	if err := models.DeleteService(sc.db, uint(id)); err != nil {
+	if err := models.DeleteService(sc.db, idParam); err != nil {
 		fmt.Printf("%v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 	}
@@ -89,9 +125,8 @@ func (sc *ServiceController) Delete(c *gin.Context) {
 
 func (sc *ServiceController) Index(c *gin.Context) {
 	data, err := models.GetAllServices(sc.db)
-	// items := []string{"hello", "world", "123312"}
+
 	if err != nil {
-		// render error page
 		return
 	}
 
@@ -114,7 +149,7 @@ func (sc *ServiceController) BindServiceTo2fa(c *gin.Context) {
 		return
 	}
 
-	user, err := models.GetUserByID(sc.db, bindRequest.AuthUserID)
+	user, err := models.GetUserByUsername(sc.db, bindRequest.Username)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "User not found"})
 		return

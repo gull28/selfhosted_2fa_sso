@@ -7,7 +7,7 @@ import (
 )
 
 type Service2fa struct {
-	ID          uint   `json:"serviceId" gorm:"primaryKey"`
+	ID          string `json:"serviceId" gorm:"primaryKey"`
 	Name        string `json:"name" gorm:"unique;not null;size=20" binding:"required,min=3,max=20"`
 	Description string `json:"description" binding:"max=512" gorm:"size:512"`
 	CreatedAt   time.Time
@@ -29,12 +29,14 @@ func GetServiceByID(db *gorm.DB, id string) (*Service2fa, error) {
 func GetAllServices(db *gorm.DB) ([]*Service2fa, error) {
 	var services []*Service2fa
 	if err := db.Find(&services).Error; err != nil {
-		return nil, err
+		return []*Service2fa{}, err
 	}
 
 	return services, nil
 }
 
-func DeleteService(db *gorm.DB, id uint) error {
-	return db.Delete(&Service2fa{}, id).Error
+func DeleteService(db *gorm.DB, id string) error {
+	var service Service2fa
+
+	return db.Delete(&service, id).Error
 }

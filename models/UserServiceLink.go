@@ -11,20 +11,39 @@ type UserServiceLink struct {
 
 	ServiceUserID string `gorm:"index"` // unknown format
 	ValidUntil    time.Time
+	Enabled       bool
 
-	User2faID    string `gorm:"index;type:text"`
-	Service2faID uint   `gorm:"index"`
+	User2faID    string `gorm:"index;type:text;column:user_2fa_id"`
+	Service2faID string `gorm:"index;type:text;column:user_2fa_id"`
 
-	User2fa    User2fa    `gorm:"foreignKey:User2faID;references:ID;constraint:OnDelete:CASCADE;"`
-	Service2fa Service2fa `gorm:"foreignKey:Service2faID;constraint:OnDelete:CASCADE;"`
+	User2fa    *User2fa    `gorm:"foreignKey:User2faID;references:ID;constraint:OnDelete:CASCADE;"`
+	Service2fa *Service2fa `gorm:"foreignKey:Service2faID;constraint:OnDelete:CASCADE;"`
 }
 
 func (UserServiceLink) TableName() string {
 	return "user_service_link"
 }
 
-func (usl *UserServiceLink) CreateUserServiceLink(db *gorm.DB) error {
+func (usl *UserServiceLink) CreateUserServiceLinks(db *gorm.DB) error {
 	return db.Create(usl).Error
+}
+
+func FetchAllUSLinks(db *gorm.DB) ([]UserServiceLink, error) {
+	var userServiceLinks []UserServiceLink
+	if err := db.Preload("User2fa").Preload("Service2fa").Find(&userServiceLinks).Error; err != nil {
+		return nil, err
+	}
+
+	return userServiceLinks, nil
+}
+
+func FetchUserServiceLinks(db *gorm.DB, userID string) []UserServiceLink {
+	var userServiceLinks []UserServiceLink
+	if err := db.Preload("User2fa").Preload("Service2fa").Where("user_2fa_id = ?", userID).Find(&userServiceLinks).Error; err != nil {
+		return []UserServiceLink{}
+	}
+
+	return userServiceLinks
 }
 
 func (usl *UserServiceLink) IsUserAlreadyBound(db *gorm.DB) bool {

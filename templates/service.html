@@ -4,15 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="/static/css/index.css?v=1.1" />
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body>
-    <div class="container start">
-      <div class="service-content">
-        <h1>Current Services</h1>
-        <div class="services">
+    <button type="button" onclick="endSession()">Logout</button>
+    <div class="flex flex-grow w-full p-4 md:p-12 lg:p-20 flex-col md:flex-row">
+      <div class="flex flex-col w-full px-16 md:px-0">
+        <h1 class="text-3xl font-bold">Current Services</h1>
+        <div class="services flex flex-grow flex-col w-full">
           {{ range .items }}
-          <div class="service">
-            <div class="upper-service-content">
+          <div class="flex flex-col border my-2 max-w-32 md:max-w-64">
+            <div class="flex flex-row items-center justify-between my-2">
               <p class="service-name">{{ .Name }}</p>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -23,7 +25,7 @@
                 viewBox="0 0 16 16"
                 class="trash"
                 onclick="deleteService('{{ .ID }}', this)"
-                >
+              >
                 <path
                   d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"
                 />
@@ -34,16 +36,13 @@
             </div>
             <div class="description-container">
               <div class="service-description">{{ .Description }}</div>
-              <button class="toggle-button" onclick="toggleDescription(this)">
-                Show more
-              </button>
             </div>
           </div>
           {{ end }}
         </div>
       </div>
-      <div class="form-content">
-        <h1>Add a service</h1>
+      <div class="flex flex-grow flex-col w-full sm:px-16 md:px-0">
+        <h1 class="text-3xl font-bold">Add a service</h1>
         <form
           id="serviceForm"
           class="service-form"
@@ -53,13 +52,27 @@
         >
           <div class="section">
             <label class="padding-x" for="name">Name</label>
-            <input type="text" name="name" id="name" required minlength="3" maxlength="20" />
+            <input
+              type="text"
+              name="name"
+              id="name"
+              required
+              minlength="3"
+              maxlength="20"
+            />
           </div>
 
           <div class="section">
             <label class="padding-x" for="id">ID</label>
             <!-- max is 18446744073709551615 -->
-            <input type="text" name="id" id="id" required minlength="8" maxlength="20" />
+            <input
+              type="text"
+              name="id"
+              id="id"
+              required
+              minlength="8"
+              maxlength="20"
+            />
           </div>
 
           <div class="section">
@@ -68,6 +81,7 @@
               type="text"
               rows="4"
               cols="50"
+              class="border border-black border-opacity-45"
               name="description"
               id="description"
             ></textarea>
@@ -89,7 +103,7 @@
 
       const data = {
         name: name,
-        serviceId: parseInt(id, 10),
+        serviceId: id,
         description: description,
       };
 
@@ -110,6 +124,7 @@
           }
         })
         .then((data) => {
+          console.log(data)
           updateServicesList(data);
           document.getElementById("serviceForm").reset();
         })
@@ -127,7 +142,7 @@
         const serviceElement = document.createElement("div");
         serviceElement.classList.add("service");
         serviceElement.innerHTML = `
-          <div class="upper-service-content">
+          <div class="upper-service-content p-4 md:p-12 lg:p-20 flex flex-grow">
             <p class="service-name">${service.name}</p>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -150,9 +165,6 @@
             <div class="service-description">
               ${service.description}
             </div>
-            <button class="toggle-button" onclick="toggleDescription(this)">
-              Show more
-            </button>
           </div>
         `;
         servicesContainer.appendChild(serviceElement);
@@ -160,8 +172,8 @@
     }
 
     function deleteService(id) {
-        console.log(id)
-        fetch(`/service/asdasd`, {
+      console.log(id);
+      fetch(`/service/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -179,6 +191,29 @@
         .then((data) => {
           updateServicesList(data);
           document.getElementById("serviceForm").reset();
+        })
+        .catch((error) => {
+          alert("An error occurred: " + error.error);
+        });
+    }
+
+    function endSession() {
+      fetch(`/session/logout`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((response) => {
+          if (response.ok) {
+            return response.json();
+          } else {
+            return response.json().then((err) => {
+              throw err;
+            });
+          }
+        })
+        .then((data) => {
+          window.location.href = "/session/create"
         })
         .catch((error) => {
           alert("An error occurred: " + error.error);
