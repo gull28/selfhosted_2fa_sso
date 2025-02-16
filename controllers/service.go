@@ -174,3 +174,13 @@ func (sc *ServiceController) BindServiceTo2fa(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Service linked to 2FA successfully", "username": user.Username})
 }
+
+func (sc *ServiceController) CreateBindRequest(c *gin.Context) {
+	// username into 2fa user id
+	// serviceID
+	// user id from service
+}
+
+func (sc *ServiceController) VerifyBindRequest(c *gin.Context) {
+	//
+}
