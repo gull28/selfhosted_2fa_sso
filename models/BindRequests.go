@@ -23,14 +23,26 @@ func (bindRequest *BindRequest) Create(db *gorm.DB) error {
 	return db.Create(&bindRequest).Error
 }
 
-func GetBindRequestByUserID(db *gorm.DB) (*BindRequest, error) {
-	return nil, nil
+func GetBindRequestsByUserID(db *gorm.DB, userID string) ([]BindRequest, error) {
+	var bindRequest []BindRequest
+
+	if err := db.Preload("User2fa").Preload("Service2fa").Find(&bindRequest).Where("user_2fa_id = ? AND validUntil > ?", userID, time.Now()).Error; err != nil {
+		return nil, err
+	}
+
+	return bindRequest, nil
 }
 
-func AcceptBindRequest(db *gorm.DB, userID string) error {
-	return nil
+func AcceptBindRequest(db *gorm.DB, userID string, serviceID string) error {
+	// find /latest/ bind request and accept it if it exists and is still valid
+
+	// delete it
+
+	// create service link
 }
 
 func DeclineBindRequest(db *gorm.DB, userID string) error {
-	return nil
+	// check if bind request entry exists
+
+	// delete it
 }
