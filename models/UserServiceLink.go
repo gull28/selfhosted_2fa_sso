@@ -24,7 +24,7 @@ func (UserServiceLink) TableName() string {
 	return "user_service_link"
 }
 
-func (usl *UserServiceLink) CreateUserServiceLinks(db *gorm.DB) error {
+func (usl *UserServiceLink) CreateUserServiceLink(db *gorm.DB) error {
 	return db.Create(usl).Error
 }
 
