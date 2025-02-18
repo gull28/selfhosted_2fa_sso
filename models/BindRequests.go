@@ -25,13 +25,37 @@ func (bindRequest *BindRequest) Create(db *gorm.DB) error {
 }
 
 func GetBindRequestsByUserID(db *gorm.DB, userID string) []BindRequest {
-	var bindRequest []BindRequest
+	var bindRequests []BindRequest
 
-	if err := db.Preload("User2fa").Preload("Service2fa").Find(&bindRequest).Where("user_2fa_id = ? AND valid_until > ?", userID, time.Now()).Error; err != nil {
+	if err := db.Preload("User2fa").Preload("Service2fa").Find(&bindRequests).Where("user_2fa_id = ? AND valid_until > ?", userID, time.Now()).Error; err != nil {
 		return []BindRequest{}
 	}
 
-	return bindRequest
+	return bindRequests
+}
+
+func GetBindRequestByID(db *gorm.DB, bindRequestID uint) (*BindRequest, error) {
+	var bindRequest BindRequest
+
+	if err := db.Preload("User2fa").Preload("Service2fa").Find(&bindRequest).First("id = ? AND valid_until > ?", bindRequestID, time.Now()).Error; err != nil {
+		return nil, err
+	}
+
+	return &bindRequest, nil
+}
+
+func GetLatestBindRequestForUser(db *gorm.DB, userID string, serviceID string) (*BindRequest, error) {
+	var bindRequest BindRequest
+
+	if err := db.Where("user_2fa_id = ? AND service_2fa_id = ? AND valid_until > ?", userID, serviceID, time.Now()).First(&bindRequest).Error; err != nil {
+		return nil, err
+	}
+
+	if err := db.Where("user_2fa_id = ? AND service_2fa_id = ?", userID, serviceID).Delete(&BindRequest{}).Error; err != nil {
+		return nil, err
+	}
+
+	return &bindRequest, nil
 }
 
 func DeleteBindRequestsForService(db *gorm.DB, userID string, serviceID string) error {

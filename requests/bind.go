@@ -12,6 +12,5 @@ type FetchActiveBindRequests struct {
 }
 
 type ActionBindRequest struct {
-	UserID    string // 2fa user id
-	ServiceID string
+	BindRequestID uint
 }

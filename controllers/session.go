@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"selfhosted_2fa_sso/config"
 	"selfhosted_2fa_sso/models"
+	"selfhosted_2fa_sso/requests"
 	"strings"
 	"time"
 
@@ -17,11 +18,6 @@ import (
 type SessionController struct {
 	db  *gorm.DB
 	cfg *config.Config
-}
-
-type SessionRequest struct {
-	Username string `json:"username" binding:"required,min=3,max=20"`
-	Password string `json:"password" binding:"required,min=8,max=100"`
 }
 
 func GetSessionController(db *gorm.DB, cfg *config.Config) *SessionController {
@@ -54,7 +50,7 @@ func (sc *SessionController) Delete(c *gin.Context) {
 }
 
 func (sc *SessionController) Create(c *gin.Context) {
-	var req SessionRequest
+	var req requests.SessionRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
@@ -70,9 +66,6 @@ func (sc *SessionController) Create(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
-
-	fmt.Printf("Password from request: %s\n", req.Password)
-	fmt.Printf("Hashed password from DB: %s\n", user.PasswordHash)
 
 	password := strings.TrimSpace(req.Password)
 

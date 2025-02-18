@@ -22,12 +22,6 @@ type ServiceItem struct {
 	ValidUntil  time.Time `json:"validUntil"`
 }
 
-// type CreateServiceRequest struct {
-// 	ID          string `json:"serviceId" binding:"required"`
-// 	Name        string `json:"name" binding:"required"`
-// 	Description string `json:"description" binding:"required"`
-// }
-
 func GetServiceController(db *gorm.DB) *ServiceController {
 	return &ServiceController{db: db}
 }
@@ -35,7 +29,6 @@ func GetServiceController(db *gorm.DB) *ServiceController {
 func (sc *ServiceController) Create(c *gin.Context) {
 	var service models.Service2fa
 	if err := c.ShouldBindJSON(&service); err != nil {
-		fmt.Printf("%v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data "})
 		return
 	}

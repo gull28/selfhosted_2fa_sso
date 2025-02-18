@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"selfhosted_2fa_sso/config"
 	"selfhosted_2fa_sso/models"
+	"selfhosted_2fa_sso/requests"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,33 +17,13 @@ type UserController struct {
 	cfg *config.Config
 }
 
-type VerifyRequest struct {
-	ServiceUserID string `json:"serviceUserId" binding:"required"`
-	Code          string `json:"code" binding:"required"`
-}
-
-type CreateRequest struct {
-	Username string `json:"username" binding:"required"`
-}
-
-type UpdateRequest struct {
-	Username    string `json:"username" binding:"required"`
-	OldUsername string `json:"oldUsername" binding:"required"`
-	Code        string `json:"code" binding:"required"`
-}
-
-type CheckValidRequest struct {
-	ServiceID uint   `json:"serviceId" binding:"required"`
-	UserID    string `json:"userId" binding:"required"`
-}
-
 func GetUserController(db *gorm.DB, cfg *config.Config) *UserController {
 	return &UserController{db: db, cfg: cfg}
 }
 
 func (uc *UserController) Create(c *gin.Context) {
 	var user models.User2fa
-	var req CreateRequest
+	var req requests.CreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
 		return
@@ -75,7 +56,7 @@ func (uc *UserController) Create(c *gin.Context) {
 }
 
 func (uc *UserController) Update(c *gin.Context) {
-	var req UpdateRequest
+	var req requests.UpdateRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid data"})
@@ -116,7 +97,7 @@ func (uc *UserController) Update(c *gin.Context) {
 }
 
 func (uc *UserController) Verify(c *gin.Context) {
-	var req VerifyRequest
+	var req requests.VerifyRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
@@ -145,7 +126,7 @@ func (uc *UserController) Verify(c *gin.Context) {
 }
 
 func (uc *UserController) CheckSession(c *gin.Context) {
-	var request CheckValidRequest
+	var request requests.CheckValidRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})

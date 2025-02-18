@@ -70,6 +70,9 @@ func (s *Server) setupRoutes() {
 	serviceRoutes := s.router.Group("/service")
 	// serviceRoutes.Use(middleware.AuthMiddleware(s.db, s.config.JWT.Secret))
 	routes.RegisterServiceRoutes(serviceRoutes, s.db)
+
+	bindRoutes := s.router.Group("/bind")
+	routes.RegisterBindRoutes(bindRoutes, s.db, s.config)
 }
 
 func (s *Server) Start() error {
