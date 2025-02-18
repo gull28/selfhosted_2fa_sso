@@ -8,10 +8,10 @@ type CreateBindRequest struct {
 }
 
 type FetchActiveBindRequests struct {
-	userID string // 2fa user id
+	UserID string // 2fa user id
 }
 
 type ActionBindRequest struct {
-	userID    string // 2fa user id
-	serviceID string
+	UserID    string // 2fa user id
+	ServiceID string
 }

@@ -24,14 +24,14 @@ func (bindRequest *BindRequest) Create(db *gorm.DB) error {
 	return db.Create(&bindRequest).Error
 }
 
-func GetBindRequestsByUserID(db *gorm.DB, userID string) ([]BindRequest, error) {
+func GetBindRequestsByUserID(db *gorm.DB, userID string) []BindRequest {
 	var bindRequest []BindRequest
 
 	if err := db.Preload("User2fa").Preload("Service2fa").Find(&bindRequest).Where("user_2fa_id = ? AND valid_until > ?", userID, time.Now()).Error; err != nil {
-		return nil, err
+		return []BindRequest{}
 	}
 
-	return bindRequest, nil
+	return bindRequest
 }
 
 func DeleteBindRequestsForService(db *gorm.DB, userID string, serviceID string) error {

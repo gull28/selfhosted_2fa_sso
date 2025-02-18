@@ -28,6 +28,47 @@ func (bc *BindController) Create(c *gin.Context) {
 		return
 	}
 
+	// check user
+	user, err := models.GetUserByUsername(bc.db, req.Username)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User not found"})
+		return
+	}
+
+	// check service
+	service, err := models.GetServiceByID(bc.db, req.ServiceID)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Service not found"})
+		return
+	}
+
+	// check if there already isnt an active bind request
+
+	bindRequest := models.BindRequest{
+		ValidUntil:    time.Now().Add(time.Duration(bc.cfg.Auth.ValidFor) * time.Minute),
+		ServiceUserID: req.ServiceUserID,
+		User2faID:     user.ID,
+		Service2faID:  service.ID,
+	}
+
+	if err := bindRequest.Create(bc.db); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Error creating bindRequest"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully created user service link"})
+}
+
+func (bc *BindController) Accept(c *gin.Context) {
+	var req requests.CreateBindRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+		return
+	}
+
 	user, err := models.GetUserByUsername(bc.db, req.Username)
 
 	if err != nil {
@@ -61,17 +102,22 @@ func (bc *BindController) Create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully created user service link"})
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully accepted bind request"})
 
 }
 
 func (bc *BindController) Fetch(c *gin.Context) {
-	//
+	var req requests.FetchActiveBindRequests
 
-}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+		return
+	}
 
-func (bc *BindController) Accept(c *gin.Context) {
-	//
+	bindRequests := models.GetBindRequestsByUserID(bc.db, req.UserID)
+
+	c.JSON(http.StatusOK, gin.H{"bindRequests": bindRequests})
+
 }
 
 func (bc *BindController) Decline(c *gin.Context) {
