@@ -11,7 +11,7 @@ import (
 func RegisterBindRoutes(bindRoutes *gin.RouterGroup, db *gorm.DB, cfg *config.Config) {
 	bindRequestController := controllers.GetBindController(db, cfg)
 
-	bindRoutes.GET("", bindRequestController.Fetch)
+	bindRoutes.GET(":userId", bindRequestController.Fetch)
 	bindRoutes.POST("", bindRequestController.Create)
 	bindRoutes.POST("/accept", bindRequestController.Accept)
 	bindRoutes.DELETE("/decline", bindRequestController.Decline)

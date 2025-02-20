@@ -82,7 +82,6 @@ func (sc *ServiceController) Fetch(c *gin.Context) {
 		})
 	}
 
-	fmt.Printf("%v serviceItmes", serviceItems)
 	c.JSON(http.StatusOK, gin.H{"services": serviceItems, "nonBoundServices": nonBindedServiceItems})
 }
 

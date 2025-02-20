@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"selfhosted_2fa_sso/config"
 	"selfhosted_2fa_sso/models"
@@ -28,6 +29,14 @@ func (bc *BindController) Create(c *gin.Context) {
 		return
 	}
 
+	// users, err := models.FetchAllUsers(bc.db)
+
+	// for _, v := range users {
+	// 	fmt.Printf("%v", v.Username)
+
+	// }
+	// fmt.Printf("%v", users)
+	// return
 	// check user
 	user, err := models.GetUserByUsername(bc.db, req.Username)
 
@@ -37,9 +46,11 @@ func (bc *BindController) Create(c *gin.Context) {
 	}
 
 	// check service
+	println(req.ServiceID)
 	service, err := models.GetServiceByID(bc.db, req.ServiceID)
 
 	if err != nil {
+		fmt.Errorf("%v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Service not found"})
 		return
 	}
@@ -72,25 +83,12 @@ func (bc *BindController) Accept(c *gin.Context) {
 	bindRequest, err := models.GetBindRequestByID(bc.db, req.BindRequestID)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "User not found"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bind request not found"})
 		return
 	}
 
-	user, err := models.GetUserByID(bc.db, bindRequest.User2faID)
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "User not found"})
-		return
-	}
-
-	service, err := models.GetServiceByID(bc.db, bindRequest.Service2faID)
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Service not found"})
-		return
-	}
-
-	if err := models.DeleteBindRequestsForService(bc.db, user.ID, service.ID); err != nil {
+	if err := models.DeleteBindRequestsForService(bc.db, bindRequest.User2faID, bindRequest.Service2faID); err != nil {
+		fmt.Printf("%v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Internal server error"})
 		return
 	}
@@ -112,17 +110,11 @@ func (bc *BindController) Accept(c *gin.Context) {
 }
 
 func (bc *BindController) Fetch(c *gin.Context) {
-	var req requests.FetchActiveBindRequests
+	userID := c.Param("userId")
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
-		return
-	}
-
-	bindRequests := models.GetBindRequestsByUserID(bc.db, req.UserID)
+	bindRequests := models.GetBindRequestsByUserID(bc.db, userID)
 
 	c.JSON(http.StatusOK, gin.H{"bindRequests": bindRequests})
-
 }
 
 func (bc *BindController) Decline(c *gin.Context) {

@@ -21,7 +21,7 @@ func (service *Service2fa) Create(db *gorm.DB) error {
 
 func GetServiceByID(db *gorm.DB, id string) (*Service2fa, error) {
 	var service Service2fa
-	err := db.First(&service, id).Error
+	err := db.Where("id = ?", id).First(&service).Error
 
 	return &service, err
 }
