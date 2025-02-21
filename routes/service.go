@@ -14,5 +14,6 @@ func RegisterServiceRoutes(serviceRoutes *gin.RouterGroup, db *gorm.DB) {
 	serviceRoutes.GET("create", serviceController.Index)
 	serviceRoutes.POST("create", serviceController.Create)
 	serviceRoutes.DELETE(":id", serviceController.Delete)
+	serviceRoutes.DELETE("unlink/:id", serviceController.Unlink)
 	// userRoutes.POST("/unbind", serviceControllerController)
 }

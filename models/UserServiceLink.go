@@ -9,12 +9,12 @@ import (
 type UserServiceLink struct {
 	gorm.Model
 
-	ServiceUserID string `gorm:"index"` // unknown format
+	ServiceUserID string `gorm:"index"`
 	ValidUntil    time.Time
 	Enabled       bool
 
 	User2faID    string `gorm:"index;type:text;column:user_2fa_id"`
-	Service2faID string `gorm:"index;type:text;column:service_2fa_id"` // ✅ Correct column name
+	Service2faID string `gorm:"index;type:text;column:service_2fa_id"`
 
 	User2fa    *User2fa    `gorm:"foreignKey:User2faID;references:ID;constraint:OnDelete:CASCADE;"`
 	Service2fa *Service2fa `gorm:"foreignKey:Service2faID;constraint:OnDelete:CASCADE;"`
@@ -55,6 +55,14 @@ func (usl *UserServiceLink) IsUserAlreadyBound(db *gorm.DB) bool {
 	}
 
 	return result.RowsAffected > 0
+}
+
+func UnlinkUserService(db *gorm.DB, userServiceLinkID uint) error {
+	var userServiceLink UserServiceLink
+
+	err := db.Where("id = ?", userServiceLinkID).Delete(&userServiceLink).Error
+
+	return err
 }
 
 func IsAuthValid(db *gorm.DB, user2faID string, service2faID uint) (bool, error) {

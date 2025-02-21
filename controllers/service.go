@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"selfhosted_2fa_sso/models"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,11 +17,12 @@ type ServiceController struct {
 }
 
 type ServiceItem struct {
-	ServiceID   string    `json:"serviceId" binding:"required"`
-	Name        string    `json:"name" binding:"required"`
-	Description string    `json:"username" binding:"required"`
-	Enabled     bool      `json:"enabled"`
-	ValidUntil  time.Time `json:"validUntil"`
+	ServiceID         string    `json:"serviceId" binding:"required"`
+	Name              string    `json:"name" binding:"required"`
+	Description       string    `json:"username" binding:"required"`
+	Enabled           bool      `json:"enabled"`
+	ValidUntil        time.Time `json:"validUntil"`
+	UserServiceLinkID uint      `json:"userServiceLinkId"`
 }
 
 func GetServiceController(db *gorm.DB) *ServiceController {
@@ -57,7 +59,6 @@ func (sc *ServiceController) Fetch(c *gin.Context) {
 	nonBindedServices, err := models.GetAllServices(sc.db)
 
 	if err != nil {
-		fmt.Printf("error 1 %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"message": "User with given userId not found"})
 	}
 
@@ -70,11 +71,12 @@ func (sc *ServiceController) Fetch(c *gin.Context) {
 		}
 
 		serviceItems = append(serviceItems, ServiceItem{
-			ServiceID:   v.Service2faID,
-			Name:        v.Service2fa.Name,
-			Description: v.Service2fa.Description,
-			ValidUntil:  v.ValidUntil,
-			Enabled:     v.Enabled,
+			ServiceID:         v.Service2faID,
+			Name:              v.Service2fa.Name,
+			Description:       v.Service2fa.Description,
+			ValidUntil:        v.ValidUntil,
+			Enabled:           v.Enabled,
+			UserServiceLinkID: v.ID,
 		})
 	}
 
@@ -124,4 +126,20 @@ func (sc *ServiceController) Index(c *gin.Context) {
 	c.HTML(http.StatusOK, "service.html", gin.H{
 		"items": data,
 	})
+}
+
+func (sc *ServiceController) Unlink(c *gin.Context) {
+	param, err := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
+	}
+
+	if err := models.UnlinkUserService(sc.db, uint(param)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Link not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Unlinked successfully!"})
 }
