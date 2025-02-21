@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"selfhosted_2fa_sso/models"
 	"time"
@@ -63,6 +64,11 @@ func (sc *ServiceController) Fetch(c *gin.Context) {
 	serviceItems := []ServiceItem{}
 
 	for _, v := range userServiceLinks {
+		if v.Service2fa == nil {
+			log.Printf("Warning: Service2fa is nil for UserServiceLink with ID %v and Service2faID %v", v.ID, v.Service2faID)
+			continue
+		}
+
 		serviceItems = append(serviceItems, ServiceItem{
 			ServiceID:   v.Service2faID,
 			Name:        v.Service2fa.Name,

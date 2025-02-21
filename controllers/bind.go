@@ -69,7 +69,7 @@ func (bc *BindController) Create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully created user service link"})
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully created bind request"})
 }
 
 func (bc *BindController) Accept(c *gin.Context) {
@@ -96,8 +96,11 @@ func (bc *BindController) Accept(c *gin.Context) {
 	// create user service link
 
 	userServiceLink := models.UserServiceLink{
-		ServiceUserID: bindRequest.Service2faID,
+		ServiceUserID: bindRequest.ServiceUserID,
 		ValidUntil:    time.Now().Add(time.Duration(bc.cfg.Auth.ValidFor) * time.Minute),
+		User2faID:     bindRequest.User2faID,
+		Service2faID:  bindRequest.Service2faID,
+		Enabled:       true,
 	}
 
 	if err := userServiceLink.CreateUserServiceLink(bc.db); err != nil {

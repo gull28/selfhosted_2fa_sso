@@ -14,7 +14,7 @@ type UserServiceLink struct {
 	Enabled       bool
 
 	User2faID    string `gorm:"index;type:text;column:user_2fa_id"`
-	Service2faID string `gorm:"index;type:text;column:user_2fa_id"`
+	Service2faID string `gorm:"index;type:text;column:service_2fa_id"` // ✅ Correct column name
 
 	User2fa    *User2fa    `gorm:"foreignKey:User2faID;references:ID;constraint:OnDelete:CASCADE;"`
 	Service2fa *Service2fa `gorm:"foreignKey:Service2faID;constraint:OnDelete:CASCADE;"`
@@ -28,13 +28,13 @@ func (usl *UserServiceLink) CreateUserServiceLink(db *gorm.DB) error {
 	return db.Create(usl).Error
 }
 
-func FetchAllUSLinks(db *gorm.DB) ([]UserServiceLink, error) {
+func FetchAllUSLinks(db *gorm.DB) []UserServiceLink {
 	var userServiceLinks []UserServiceLink
 	if err := db.Preload("User2fa").Preload("Service2fa").Find(&userServiceLinks).Error; err != nil {
-		return nil, err
+		return []UserServiceLink{}
 	}
 
-	return userServiceLinks, nil
+	return userServiceLinks
 }
 
 func FetchUserServiceLinks(db *gorm.DB, userID string) []UserServiceLink {
